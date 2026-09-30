@@ -1,0 +1,27 @@
+name: Shop-Bilder holen
+on:
+  push:
+    paths: ['fetch/urls.txt']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dateien laden
+        run: |
+          mkdir -p quellen
+          while read -r url name; do
+            [ -z "$url" ] && continue
+            case "$url" in \#*) continue;; esac
+            curl -sSfL -A "Mozilla/5.0" "$url" -o "quellen/$name" && echo "OK $name" || echo "FEHLER $url"
+          done < fetch/urls.txt
+      - name: Speichern
+        run: |
+          git config user.name "nkf-bot"
+          git config user.email "nkf-bot@users.noreply.github.com"
+          git add quellen
+          git commit -m "Shop-Bilder aktualisiert" || echo "nichts neu"
+          git push
